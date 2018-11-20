@@ -66,7 +66,7 @@ class Archer {
             }
             throw new Archer\Exception\TaskTimeoutException();
         } else {
-            $result = $result_receiver->pop($timeout - $time_pass);
+            $result = $result_receiver->pop();
             if ($result instanceof \Throwable)
                 throw $result;
             return current($result);
