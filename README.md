@@ -51,7 +51,7 @@ go(function () {
 
 ------
 
-## 例子
+## 接口
 
 ### 伪异步模式
 ```php
@@ -110,7 +110,7 @@ $container->executeAndYieldEachOne(?float $timeout = null): \Generator;
 
 | 返回模式 | 协程说明 | 异常处理 |
 | :-- | :-- | :-- |
-| 当前协程将会挂起，每有一个Task执行完，当前协程将恢复且其结果就会以以键值对的方式yield出来，然后协程会挂起等待下一个执行完的Task。 | 所有Task所处协程均不同 | 若某个Task抛出了任何异常，不会影响其他Task的执行，但这个Task不会被`yield`出来，需要通过`getError(int $taskid)`或`getErrorMap()`方法获取异常对象 |
+| 当前协程将会挂起，每有一个Task执行完，当前协程将恢复且其结果就会以键值对的方式yield出来，然后协程会挂起等待下一个执行完的Task。 | 所有Task所处协程均不同 | 若某个Task抛出了任何异常，不会影响其他Task的执行，但这个Task不会被`yield`出来，需要通过`getError(int $taskid)`或`getErrorMap()`方法获取异常对象 |
 
 获取某Task抛出的异常（若Task未抛出异常则返回null）
 ```php
@@ -120,6 +120,23 @@ $container->getError(int $id): ?\Throwable;
 ```php
 $container->getErrorMap(): array;
 ```
+
+### 注册一个全局回调函数
+```php
+\Swlib\Archer\Task::registerTaskFinishFunc(callable $func): void;
+```
+这里注册的回调函数会在每个Task结束时执行，不论Task是否抛出了异常，不论Task模式，格式如下：
+```php
+function (int $task_id, $task_return_value, ?\Throwable $e) {
+    // $task_id 为\Swlib\Archer::task()或\Swlib\Archer\MultiTask->addTask() 返回的Task id。\Swlib\Archer::taskWait()由于无法获取Taskid，所以可以忽略该项。
+    // $task_return_value 为Task闭包 $task_callback 的返回值，若没有返回值或抛出了异常，则该项为null
+    // $e为Task闭包 $task_callback 中抛出的异常，正常情况下为null
+}
+```
+不建议在该方法中执行会引起阻塞或协程切换的操作，因为会影响到Task运行结果的传递效率；也不要在该方法中抛出任何异常，会导致catch不到而使进程退出。  
+该方法所处的协程与Task所处的协程为同一个，所以可以利用该函数清理执行Task所留下的Context。  
+- Task为伪异步模式时，该方法会在 $finish_callback 之前执行
+- Task为协程同步返回模式或集模式时，该方法会在返回或抛出异常给原协程之前调用。
 
 ## 配置
 ```php
