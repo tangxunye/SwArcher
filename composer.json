@@ -1,6 +1,7 @@
 {
   "name": "swlib/archer",
-  "type": "library",
+  "description": "Swoole coroutine task kit",
+  "license": "Apache-2.0",
   "keywords": [
     "php",
     "swoole",
@@ -10,20 +11,11 @@
     "coroutine",
     "task"
   ],
-  "description": "Swoole coroutine task kit",
-  "license": "Apache-2.0",
-  "authors": [
-    {
-      "name": "fdream",
-      "email": "fdream.lhl@foxmail.com"
-    }
-  ],
-  "support": {
-    "issues": ""
-  },
+  "support": {},
   "require": {
     "php": ">=7.1"
   },
+  "suggest": {},
   "autoload": {
     "classmap": [
       "src/Archer.php"
@@ -32,16 +24,10 @@
       "Swlib\\Archer\\": "src"
     }
   },
-  "repositories": {
-    "packagist": {
-      "type": "composer",
-      "url": "https://packagist.laravel-china.org/"
-    }
-  },
-  "require-dev": {},
   "config": {
     "optimize-autoloader": true,
     "sort-packages": true
   },
+  "extra": {},
   "scripts": {}
 }

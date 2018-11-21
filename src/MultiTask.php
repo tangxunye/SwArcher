@@ -57,13 +57,13 @@ class MultiTask implements \Countable {
         unset($this->error_map);
         return $this;
     }
-    private function execute() {
+    private function execute(): bool {
         if ($this->status !== self::STATUS_PREPARING)
             throw new Exception\RuntimeException('Wrong status when executing:' . $this->status);
 
         if (empty($this->tasks)) {
             $this->status = self::STATUS_DONE;
-            return [];
+            return false;
         }
 
         $this->status = self::STATUS_EXECUTING;
@@ -90,6 +90,7 @@ class MultiTask implements \Countable {
             if (! Queue::getInstance()->push($task))
                 throw new Exception\AddNewTaskFailException();
         }
+        return true;
     }
     /**
      * 投递 addTask 添加的所有 Task，同时当前协程挂起。当该所有Task执行完成后，会恢复投递的协程，并以键值对的形式返回所有Task的返回值
@@ -107,7 +108,8 @@ class MultiTask implements \Countable {
         if (isset($timeout))
             $start_time = microtime(true);
         $this->type = self::TYPE_WAIT_FOR_ALL;
-        $this->execute();
+        if (! $this->execute())
+            return [];
 
         if (isset($timeout)) {
             // 由于上面的操作可能会发生协程切换占用时间，这里调整一下pop的timeout减少时间误差
@@ -142,7 +144,8 @@ class MultiTask implements \Countable {
         if (isset($timeout))
             $start_time = microtime(true);
         $this->type = self::TYPE_YIELD_EACH_ONE;
-        $this->execute();
+        if (! $this->execute())
+            return [];
 
         if (isset($timeout)) {
             $outside_time_cost = 0;
