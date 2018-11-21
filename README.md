@@ -2,7 +2,7 @@
 
 [![Php Version](https://img.shields.io/badge/php-%3E=7.1-brightgreen.svg?maxAge=2592000)](https://secure.php.net/)
 [![Swoole Version](https://img.shields.io/badge/swoole-%3E=4.2.8-brightgreen.svg?maxAge=2592000)](https://github.com/swoole/swoole-src)
-[![Saber License](https://img.shields.io/hexpm/l/plug.svg?maxAge=2592000)](https://github.com/swlib/saber/blob/master/LICENSE)
+[![Archer License](https://img.shields.io/hexpm/l/plug.svg?maxAge=2592000)](https://github.com/fdreamsu/SwArcher/blob/master/LICENSE)
 
 ## 简介
 
@@ -38,15 +38,15 @@ $loader->addClassMap([
 
 ## 依赖
 
-- **PHP71** or later
-- **Swoole 4.2.8 or later**
+- **PHP 7.1** or later
+- **Swoole 4.2.8** or later
 
 ------
 <br>
 
 ## 协程调度
 
-Swoole底层实现协程调度, **业务层无需感知**, 开发者可以无感知的**用同步的代码编写方式达到异步IO的效果和超高性能**，避免了传统异步回调所带来的离散的代码逻辑和陷入多层回调中导致代码无法维护。
+Swoole底层实现协程调度, **业务层无需感知**, 开发者可以无感知的**用同步的代码编写方式达到异步IO的效果和超高性能**，避免了传统异步回调所带来的离散的代码逻辑和陷入多层回调中导致代码无法维护。  
 Task队列循环与各Task的执行都处于独立的协程中，**不会占用用户自己创建的协程**。可以将**任意协程变为Defer模式**，无需手动触发defer()与recv()。
 
 需要在`onRequet`, `onReceive`, `onConnect`等事件回调函数中使用, 或是使用go关键字包裹 (`swoole.use_shortname`默认开启).
@@ -106,7 +106,7 @@ $task = \Swlib\Archer::taskDefer($task_callback, ['foo', 'bar']);
 | 立即返回Task对象 | $task_callback与当前协程不是同一个 | 若Task抛出了任何异常，Archer会捕获后在执行recv时抛出。 |
 
 获取执行结果：
-```
+```php
 /*定义*/ \Swlib\Archer\Task\Defer->recv(?float $timeout = null);
 $task->recv(0.5);
 ```
