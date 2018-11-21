@@ -6,12 +6,14 @@
 
 ## 简介
 
- 协程Task弓手, `Swoole人性化组件库`之PHP高性能Task队列, 基于Swoole原生协程, 底层提供无额外I/O的高性能解决方案, 让开发者专注于功能开发, 从繁琐的传统Task队列中解放.
+ 协程Task弓兵, `Swoole人性化组件库`之PHP高性能Task队列, 基于Swoole原生协程, 底层提供无额外I/O的高性能解决方案, 让开发者专注于功能开发, 从繁琐的传统Task队列或协程并发旋涡中解放.
 
 - 基于Swoole协程开发, 以单进程协程实现Swoole Task提供的所有功能
 - 人性化使用风格, API简单易用, 符合传统同步代码开发逻辑习惯
 - 完备的Exception异常事件, 符合面向对象的基本思路, 避免陷入若类型陷阱
-- 多种Task模式（伪异步、协程同步、多任务集合）等，满足各种开发情景
+- 多种Task模式（伪异步、协程同步、Defer模式多任务集合）等，满足各种开发情景
+- 轻松将任意协程代码变为Defer模式，不用刻意修改为defer()与recv()。
+- 可以将任意协程代码并发执行而不改变原先设计模式。
 
 ------
 <br>
@@ -36,13 +38,14 @@ composer require swlib/archer
 
 ## 协程调度
 
-Swoole底层实现协程调度, **业务层无需感知**, 开发者可以无感知的**用同步的代码编写方式达到异步IO的效果和超高性能**，避免了传统异步回调所带来的离散的代码逻辑和陷入多层回调中导致代码无法维护。Task队列循环与各Task的执行都处于独立的协程中，不会占用用户自己创建的协程。
+Swoole底层实现协程调度, **业务层无需感知**, 开发者可以无感知的**用同步的代码编写方式达到异步IO的效果和超高性能**，避免了传统异步回调所带来的离散的代码逻辑和陷入多层回调中导致代码无法维护。Task队列循环与各Task的执行都处于独立的协程中，不会占用用户自己创建的协程。可以将任意协程变为Defer模式，无需手动触发defer()与recv()。
 
 需要在`onRequet`, `onReceive`, `onConnect`等事件回调函数中使用, 或是使用go关键字包裹 (`swoole.use_shortname`默认开启).
 
 ```php
 go(function () {
     echo \Swlib\Archer::taskWait(function (string $target): string {
+        co::sleep(5);
         return "Hello {$target}";
     }, ['world']);
 })
@@ -175,21 +178,6 @@ Archer会抛出以下几种异常：
 
 ## 例子
 (待补充)
-
-------
-
-## IDE Helper
-
-将本项目源文件加入到IDE的 `Include Path` 中.
-
- (使用composer安装,则可以包含整个vendor文件夹, PHPStorm会自动包含)
-
-良好的注释书写使得Saber完美支持IDE自动提示, 只要在对象后书写箭头符号即可查看所有对象方法名称, 名称都十分通俗易懂, 大量方法都遵循**PSR**规范或是参考[Guzzle](https://github.com/guzzle/guzzle)项目(感谢)而实现.
-
-对于底层Swoole相关类的IDE提示则需要引入eaglewu的[swoole-ide-helper](https://github.com/eaglewu/swoole-ide-helper)(composer在dev环境下会默认安装), 但是该项目为手动维护, 不太完整, 也可以使用[swoft-ide-helper](https://github.com/swoft-cloud/swoole-ide-helper)或:
-
-**Swoole官方的[ide-helper](https://github.com/swoole/ide-helper/)并运行`php dump.php`生成一下.**
-
 
 ------
 
