@@ -73,6 +73,24 @@ class Archer {
         }
     }
     /**
+     * 投递一个Task进入队列，该方法立即返回刚才所投递的Task。通过执行$task->recv()获得执行结果
+     * 注意1：若Task抛出了任何\Throwable异常，Archer会捕获后在$task->recv()抛出。
+     * 注意2：Task执行时的协程与当前协程不是同一个
+     *
+     * @param callable $task_callback
+     *            需要执行的函数
+     * @param array $params
+     *            传递进$task_callback中的参数，可缺省
+     * @throws Archer\Exception\AddNewTaskFailException 因channel状态错误AddTask失败，这是一种正常情况不应该出现的Exception
+     * @return Archer\Task\Defer 刚投递的Task
+     */
+    public static function taskDefer(callable $task_callback, ?array $params = null): Archer\Task\Defer {
+        $task = new Archer\Task\Defer($task_callback, $params);
+        if (! Queue::getInstance()->push($task))
+            throw new Archer\Exception\AddNewTaskFailException();
+        return $task;
+    }
+    /**
      * 获取多Task的处理容器，每次执行都是获取一个全新的对象
      *
      * @return Archer\MultiTask

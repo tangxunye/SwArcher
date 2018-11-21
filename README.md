@@ -82,35 +82,55 @@ function (int $task_id, $task_return_value, ?\Throwable $e) {
 | 返回模式 | 协程说明 | 异常处理 |
 | :-- | :-- | :-- |
 | 当前协程挂起，直到Task执行完成并返回结果 | $task_callback与当前协程不是同一个 | 若Task抛出了任何异常，Archer会捕获后在这里抛出。 |
+### Defer模式
+获取Task：
+```php
+/*定义*/ \Swlib\Archer::taskDefer(callable $task_callback, ?array $params = null): \Swlib\Archer\Task\Defer;
+$task = \Swlib\Archer::taskDefer($task_callback, ['foo', 'bar']);
+```
+
+| 返回模式 | 协程说明 | 异常处理 |
+| :-- | :-- | :-- |
+| 立即返回Task对象 | $task_callback与当前协程不是同一个 | 若Task抛出了任何异常，Archer会捕获后在执行recv时抛出。 |
+
+获取执行结果：
+```
+/*定义*/ \Swlib\Archer\Task\Defer->recv(?float $timeout = null);
+$task->recv(0.5);
+```
+
+| 返回模式 | 协程说明 | 异常处理 |
+| :-- | :-- | :-- |
+| 若Task已执行完则直接返回结果。否则协程挂起，等待执行完毕后恢复并返回结果。 | $task_callback与当前协程不是同一个 | 若Task抛出了任何异常，Archer会捕获后会在此处抛出。 |
 ### Task集模式
 获取容器：
 ```php
 $container = \Swlib\Archer::getMultiTask();
 ```
-添加Task，但暂时先不投递到队列中执行。返回值为Task id
+向队列投递Task并立即返回Task id。
 ```php
 $container->addTask(callable $task_callback, ?array $params = null): int;
 ```
 两种执行模式：
-###### 等待全部结果：投递所有Task进入队列，并等待所有Task全部执行完。返回值为键值对，键为Taskid，值为其对应的返回值
+###### 等待全部结果：等待所有Task全部执行完。返回值为键值对，键为Taskid，值为其对应的返回值
 ```php
-$container->executeAndWaitForAll(?float $timeout = null): array;
+$container->waitForAll(?float $timeout = null): array;
 ```
 - `$timeout` 超时时间，超时后函数会直接抛出`Swlib\Archer\Exception\TaskTimeoutException`。注意：超时返回后所有Task仍会继续执行，不会中断，不会移出队列。若缺省则表示不会超时
 
 | 返回模式 | 协程说明 | 异常处理 |
 | :-- | :-- | :-- |
-| 当前协程挂起，直到所有Task执行完成并返回结果 | 所有Task所处协程均不同 | 若某个Task抛出了任何异常，不会影响其他Task的执行，但在返回值中不会出现该Task id对应的项，需要通过`getError(int $taskid)`或`getErrorMap()`方法获取异常对象 |
-###### 先完成先返回：投递所有Task进入队列，各Task的执行结果会根据其完成的顺序，以键值对的形式yield出来
+| 若运行时所有Task已执行完，则会直接以键值对的形式返回所有Task的返回值。否则当前协程挂起。当该所有Task执行完成后，会恢复投递的协程，并返回结果。 | 所有Task所处协程均不同 | 若某个Task抛出了任何异常，不会影响其他Task的执行，但在返回值中不会出现该Task id对应的项，需要通过`getError(int $taskid)`或`getErrorMap()`方法获取异常对象 |
+###### 先完成先返回：各Task的执行结果会根据其完成的顺序，以键值对的形式yield出来
 ```php
-$container->executeAndYieldEachOne(?float $timeout = null): \Generator;
+$container->yieldEachOne(?float $timeout = null): \Generator;
 ```
 - `$timeout` 超时时间，超时后函数会直接抛出`Swlib\Archer\Exception\TaskTimeoutException`（该时间表示花费在本方法内的时间，外界调用该方法处理每个返回值所耗费的时间不计入）。注意：超时返回后所有Task仍会继续执行，不会中断，不会移出队列。若缺省则表示不会超时
 - 生成器遍历完成后，可以通过 `Generator->getReturn()` 方法获取返回值的键值对
 
 | 返回模式 | 协程说明 | 异常处理 |
 | :-- | :-- | :-- |
-| 当前协程将会挂起，每有一个Task执行完，当前协程将恢复且其结果就会以键值对的方式yield出来，然后协程会挂起等待下一个执行完的Task。 | 所有Task所处协程均不同 | 若某个Task抛出了任何异常，不会影响其他Task的执行，但这个Task不会被`yield`出来，需要通过`getError(int $taskid)`或`getErrorMap()`方法获取异常对象 |
+| 若运行时已经有些Task已执行完，则会按执行完毕的顺序将他们先yield出来。若这之后仍存在未执行完的Task，则当前协程将会挂起，每有一个Task执行完，当前协程将恢复且其结果就会以以键值对的方式yield出来，然后协程会挂起等待下一个执行完的Task。 | 所有Task所处协程均不同 | 若某个Task抛出了任何异常，不会影响其他Task的执行，但这个Task不会被`yield`出来，需要通过`getError(int $taskid)`或`getErrorMap()`方法获取异常对象 |
 
 获取某Task抛出的异常（若Task未抛出异常则返回null）
 ```php
@@ -152,6 +172,9 @@ Archer会抛出以下几种异常：
 - `Swlib\Archer\Exception\AddNewTaskFailException` 将task加入队列时发生错误，由 \Swoole\Coroutine\Channel->pop 报错引起，这往往是由内核错误导致的
 - `Swlib\Archer\Exception\RuntimeException` Archer内部状态错误，通常由用户错误地调用了底层函数引起
 - `Swlib\Archer\Exception\TaskTimeoutException` Task超时，因用户在某些地方设置了`timeout`，Task排队+执行时间超过了该时间引发的异常。用户应该在需要设置`timeout`的地方捕获这个异常以完成超时逻辑。注意Task执行时间超时不会引起Task中断或被移出队列。
+
+## 例子
+(待补充)
 
 ------
 
