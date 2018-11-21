@@ -20,10 +20,18 @@
 
 ## 安装
 
-最好的安装方法是通过 [Composer](http://getcomposer.org/) 包管理器 :
+最好的安装方法是通过 [Composer](http://getcomposer.org/) 包管理器 :（然而现在暂时并不支持这么安装，正在与官方争取加入swlib）
 
 ```shell
 composer require swlib/archer
+```
+或者下载代码，并在autoloader中手动注册Archer：
+```php
+$loader = include YOUR_BASE_PATH . 'vendor/autoload.php';
+$loader->setPsr4('Swlib\\Archer\\', YOUR_PATH . '/src/');
+$loader->addClassMap([
+    'Swlib\\Archer' => YOUR_PATH . '/src/Archer.php'
+]);
 ```
 
 ------
@@ -123,7 +131,7 @@ $container->waitForAll(?float $timeout = null): array;
 
 | 返回模式 | 协程说明 | 异常处理 |
 | :-- | :-- | :-- |
-| 若运行时所有Task已执行完，则会直接以键值对的形式返回所有Task的返回值。否则当前协程挂起。当该所有Task执行完成后，会恢复投递的协程，并返回结果。 | 所有Task所处协程均不同 | 若某个Task抛出了任何异常，不会影响其他Task的执行，但在返回值中不会出现该Task id对应的项，需要通过`getError(int $taskid)`或`getErrorMap()`方法获取异常对象 |
+| 若运行时所有Task已执行完，则会直接以键值对的形式返回所有Task的返回值。否则当前协程挂起。当所有Task执行完成后，会恢复投递的协程，并返回结果。 | 所有Task所处协程均不同 | 若某个Task抛出了任何异常，不会影响其他Task的执行，但在返回值中不会出现该Task id对应的项，需要通过`getError(int $taskid)`或`getErrorMap()`方法获取异常对象 |
 ###### 先完成先返回：各Task的执行结果会根据其完成的顺序，以键值对的形式yield出来
 ```php
 $container->yieldEachOne(?float $timeout = null): \Generator;
