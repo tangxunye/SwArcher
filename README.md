@@ -100,13 +100,14 @@ $container->executeAndWaitForAll(?float $timeout = null): array;
 
 | 返回模式 | 协程说明 | 异常处理 |
 | :-- | :-- | :-- |
-| 当前携程挂起，直到所有Task执行完成并返回结果 | 所有Task所处协程均不同 | 若某个Task抛出了任何异常，不会影响其他Task的执行，但在返回值中不会出现该Task id对应的项，需要通过`getError(int $taskid)`或`getErrorMap()`方法获取异常对象 |
+| 当前协程挂起，直到所有Task执行完成并返回结果 | 所有Task所处协程均不同 | 若某个Task抛出了任何异常，不会影响其他Task的执行，但在返回值中不会出现该Task id对应的项，需要通过`getError(int $taskid)`或`getErrorMap()`方法获取异常对象 |
 ###### 先完成先返回：投递所有Task进入队列，各Task的执行结果会根据其完成的顺序，以键值对的形式yield出来
 ```php
 $container->executeAndYieldEachOne(?float $timeout = null): \Generator;
 ```
 - `$timeout` 超时时间，超时后函数会直接抛出`Swlib\Archer\Exception\TaskTimeoutException`（该时间表示花费在本方法内的时间，外界调用该方法处理每个返回值所耗费的时间不计入）。注意：超时返回后所有Task仍会继续执行，不会中断，不会移出队列。若缺省则表示不会超时
 - 生成器遍历完成后，可以通过 `Generator->getReturn()` 方法获取返回值的键值对
+
 | 返回模式 | 协程说明 | 异常处理 |
 | :-- | :-- | :-- |
 | 当前协程将会挂起，每有一个Task执行完，当前协程将恢复且其结果就会以以键值对的方式yield出来，然后协程会挂起等待下一个执行完的Task。 | 所有Task所处协程均不同 | 若某个Task抛出了任何异常，不会影响其他Task的执行，但这个Task不会被`yield`出来，需要通过`getError(int $taskid)`或`getErrorMap()`方法获取异常对象 |
