@@ -2,12 +2,8 @@
 namespace Swlib\Archer\Task;
 class CoPackUnit extends \Swlib\Archer\Task {
     protected $multi_task;
-    /**
-     * 不在构造方法中设置这个成员，是为了防止循环引用，具体代码逻辑见 \Swlib\Archer\MultiTask->execute
-     *
-     * @param \Swlib\Archer\MultiTask $multi_task
-     */
-    public function setMultiTask(\Swlib\Archer\MultiTask $multi_task) {
+    public function __construct(callable $task_callback, ?array $params, \Swlib\Archer\MultiTask $multi_task) {
+        parent::__construct($task_callback, $params);
         $this->multi_task = $multi_task;
     }
     public function execute() {
