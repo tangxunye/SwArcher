@@ -27,7 +27,7 @@ composer require swlib/archer
 ```
 或者下载代码，并在autoloader中手动注册Archer：
 ```php
-$loader = include YOUR_BASE_PATH . 'vendor/autoload.php';
+$loader = include YOUR_BASE_PATH . '/vendor/autoload.php';
 $loader->setPsr4('Swlib\\Archer\\', YOUR_PATH . '/src/');
 $loader->addClassMap([
     'Swlib\\Archer' => YOUR_PATH . '/src/Archer.php'
@@ -46,7 +46,8 @@ $loader->addClassMap([
 
 ## 协程调度
 
-Swoole底层实现协程调度, **业务层无需感知**, 开发者可以无感知的**用同步的代码编写方式达到异步IO的效果和超高性能**，避免了传统异步回调所带来的离散的代码逻辑和陷入多层回调中导致代码无法维护。Task队列循环与各Task的执行都处于独立的协程中，不会占用用户自己创建的协程。可以将任意协程变为Defer模式，无需手动触发defer()与recv()。
+Swoole底层实现协程调度, **业务层无需感知**, 开发者可以无感知的**用同步的代码编写方式达到异步IO的效果和超高性能**，避免了传统异步回调所带来的离散的代码逻辑和陷入多层回调中导致代码无法维护。
+Task队列循环与各Task的执行都处于独立的协程中，**不会占用用户自己创建的协程**。可以将**任意协程变为Defer模式**，无需手动触发defer()与recv()。
 
 需要在`onRequet`, `onReceive`, `onConnect`等事件回调函数中使用, 或是使用go关键字包裹 (`swoole.use_shortname`默认开启).
 
